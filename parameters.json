@@ -1,0 +1,10 @@
+{
+    "batch_size": 16,
+    "learning_rate": 0.001,
+    "epochs": 100,
+    "patience": 5,
+    "train_size": 80,
+    "test_size": 90,
+    "train_model": true,
+    "load_model": false
+}
