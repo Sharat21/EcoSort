@@ -1,0 +1,6 @@
+matplotlib==3.10.1
+numpy==2.2.3
+Pillow==11.1.0
+torch==2.6.0
+torchvision==0.21.0
+ultralytics==8.3.91
