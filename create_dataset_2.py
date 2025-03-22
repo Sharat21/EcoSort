@@ -11,7 +11,7 @@ from sqlite3 import connect
 NUM_OBJECTS_PER_IMAGE_MIN = 25
 NUM_OBJECTS_PER_IMAGE_MAX = 45
 IMAGE_SIZE = 2000
-NUM_IMAGES_TO_CREATE = 10000
+NUM_IMAGES_TO_CREATE = 1
 NUM_WORKERS = cpu_count() - 2  # use one less than total CPUs to help with the speed for 10k+
 
 model_seg = YOLO("yolo11n-seg.pt")
@@ -87,8 +87,53 @@ def store_final_objects_in_database(image_index, objects):
     conn.commit()
     conn.close()
 
+def rotate_image(image, angle):
+    (h, w) = image.shape[:2]
+    center = (w // 2, h // 2)
+
+    M = cv2.getRotationMatrix2D(center, angle, 1.0)
+    rotated = cv2.warpAffine(image, M, (w, h), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT, borderValue=(0, 0, 0))
+
+    return rotated
+
+def overlay_transparent(background, overlay, x, y):
+    bh, bw = background.shape[:2]
+    h, w = overlay.shape[:2]
+
+    if x + w > bw or y + h > bh:
+        return background  # skip if overlay goes out of bounds
+
+    overlay_img = overlay[..., :3]
+    mask = overlay[..., 3:] / 255.0
+
+    background_crop = background[y:y+h, x:x+w]
+    background[y:y+h, x:x+w] = (1 - mask) * background_crop + mask * overlay_img
+    return background
+
+
+def add_realism(background_image):
+    grime_paths = [f"assets/grime/{f}" for f in os.listdir("assets/grime") if f.endswith(".png")]
+    for _ in range(randint(3, 8)):
+        grime_path = np.random.choice(grime_paths)
+        grime = cv2.imread(grime_path, cv2.IMREAD_UNCHANGED)
+
+        scale = np.random.uniform(0.3, 1.0)
+        grime = cv2.resize(grime, (0, 0), fx=scale, fy=scale)
+        grime = rotate_image(grime, randint(-180, 180))
+
+
+        x = randint(0, IMAGE_SIZE - grime.shape[1])
+        y = randint(0, IMAGE_SIZE - grime.shape[0])
+
+        background_image = overlay_transparent(background_image, grime, x, y)
+    return background_image
+
+
 def create_image_worker(image_index):
-    background_image = np.zeros((IMAGE_SIZE, IMAGE_SIZE, 3), dtype=np.uint8)
+    background_image = cv2.imread("assets/conveyor.jpg")
+    background_image = cv2.resize(background_image, (IMAGE_SIZE, IMAGE_SIZE))
+    background_image = add_realism(background_image)
+
     temp_objects = []
 
     for _ in range(randint(NUM_OBJECTS_PER_IMAGE_MIN, NUM_OBJECTS_PER_IMAGE_MAX)):
@@ -100,7 +145,10 @@ def create_image_worker(image_index):
         object_image = cv2.imread(image_path)
         object_image = cv2.resize(object_image, (640, 480))
 
-        results_seg = model_seg.predict(image_path, save=False)
+        # apply a random rotation to prevent overrepresentation of orientation
+        object_image = rotate_image(object_image, randint(-180, 180))
+        
+        results_seg = model_seg.predict(object_image, save=False)
         h, w = 480, 640
         x_offset = randint(0, IMAGE_SIZE - w)
         y_offset = randint(0, IMAGE_SIZE - h)
