@@ -18,38 +18,23 @@
 ---
 
 ## 🛠️ Setup Instructions
+1**Install Requirements**
 
-1. **Download the TrashNet Dataset**
+   Run the setup script to install dependencies and prepare the environment
+   
+2. **Download the TrashNet Dataset**
 
    Download the dataset from Kaggle:  
    [https://www.kaggle.com/datasets/feyzazkefe/trashnet?resource=download](https://www.kaggle.com/datasets/feyzazkefe/trashnet?resource=download)
 
-2. **Restructure the Dataset**
+3. **Restructure the Dataset**
 
    - Extract all images from the downloaded dataset.
    - Place all the images directly under a single directory named `datasets/`.
-   - Ensure there are **no subfolders**—only images in the `datasets/` directory.
+   - Ensure there are ** only Class_folder  in the `datasets/` directory.
 
-3. **Install Requirements**
-
-   Run the setup script to install dependencies and prepare the environment:
-
-     ```bash
-   python setup.py install
-
-
-   python execute_pipeline.py
-
-
-    python segmentation_eval.py
-
-
-    python classification.py
-
-
-    python subclassification.py
-
-    ```
+4- **Run Pipeline_evaluation**
+- Run Pipeline_evaluation.py
 
 
    📌 Notes
