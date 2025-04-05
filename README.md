@@ -18,7 +18,7 @@
 ---
 
 ## 🛠️ Setup Instructions
-1**Install Requirements**
+1. **Install Requirements**
 
    Run the setup script to install dependencies and prepare the environment
    
